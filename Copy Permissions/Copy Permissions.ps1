@@ -78,15 +78,26 @@ if($confirm -eq "no") {
     break
 }
 
-## Get Items - This may not happen based on Query.MaxItems
-$copyFromLocationPath = $copyFromLocation.FullPath + "//*"
-$allItemsFrom = Get-Item -Path master:// -Query $copyFromLocationPath
-$allItemsFrom += Get-Item -Path master:// -Query $copyFromLocation.Fullpath #Add Root item to list
+## Get-Items - Don't do this because relies on Query.MaxItems
+#$copyFromLocationPath = $copyFromLocation.FullPath + "//*"
+#$allItemsFrom = Get-Item -Path master:// -Query $copyFromLocationPath
+#$allItemsFrom += Get-Item -Path master:// -Query $copyFromLocation.Fullpath #Add Root item to list
+
+
+## Find-Items - Do this instead as it uses the index and is more performant
+$criteria = @(
+    @{Filter = "StartsWith"; Field = "_fullpath"; Value = $copyFromLocation.FullPath},
+    @{Filter = "Equals"; Field = "_latestversion"; Value = "1"}
+)
+$props = @{
+    Index = "sitecore_master_index"
+    Criteria = $criteria
+}
+$allItemsFrom = Find-Item @props
 
 ### Loop through each item and compare "From" to "To"
 ForEach ($item in $allItemsFrom) {
-    
-    $addPath = $item.Fullpath.Replace($copyFromLocation.FullPath, "")
+    $addPath = $item.Path.Replace($copyFromLocation.FullPath, "")
     $toPath = $copyToLocation.FullPath + $addPath
     $toItem = Get-Item -Path $toPath -ErrorAction Ignore
     
@@ -120,3 +131,4 @@ ForEach ($item in $allItemsFrom) {
     Get-Item -Path $toItem.FullPath | Add-ItemAcl -AccessRules $aclModified
 }
 Write-Output "Updates Complete."
+Show-Alert "Updates Complete."
