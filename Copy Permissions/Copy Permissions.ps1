@@ -97,7 +97,7 @@ $allItemsFrom = Find-Item @props
 
 ### Loop through each item and compare "From" to "To"
 ForEach ($item in $allItemsFrom) {
-    $addPath = $item.Path.Replace($copyFromLocation.FullPath, "")
+    $addPath = $item.Path.Replace($copyFromLocation.FullPath.ToLower(), "")
     $toPath = $copyToLocation.FullPath + $addPath
     $toItem = Get-Item -Path $toPath -ErrorAction Ignore
     
@@ -107,7 +107,7 @@ ForEach ($item in $allItemsFrom) {
     }
     
     #Gets ACL from item for specific role
-    $acls = Get-ItemAcl -Path $item.FullPath -Filter $copyRoleFrom[0] 
+    $acls = Get-ItemAcl -Path $item.Path -Filter $copyRoleFrom[0] 
     
     if(!$acls) {
         $itemName = $item.Name
